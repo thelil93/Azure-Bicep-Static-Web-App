@@ -1,0 +1,9 @@
+{
+    "domains":{
+        "example.com":{
+            "resourceGroup": "azure-resourcegroup-name",
+            "subscription": "azure-subscription-id",
+            "domain": "example.com"          
+        }
+    }
+}
