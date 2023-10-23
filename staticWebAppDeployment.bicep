@@ -76,6 +76,7 @@ param paramSubDomain string
 param paramRepositoryUrl string
 
 @description('Your GitHub personal access token.')
+@secure()
 param paramRepositoryToken string
 
 // -------------------
