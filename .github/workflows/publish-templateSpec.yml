@@ -15,18 +15,44 @@ env:
   TEMPLATE_SPEC_NAME: static-web-app
   TEMPLATE_SPEC_FILE_PATH: staticWebAppDeployment.bicep
   TEMPLATE_METADATA_FILE_PATH: metadata.json
+  TESTENV_TEMPLATE_FILE_PATH: staticWebAppDeployment.json
 
 jobs:
-  lint:
+  TEST:
     runs-on: ubuntu-latest
+    environment: test
     steps:
     - uses: actions/checkout@v3
+    - uses: azure/login@v1
+      name: Sign in to Azure
+      with:
+        client-id: ${{ secrets.TESTENV_AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.TESTENV_AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.TESTENV_AZURE_SUBSCRIPTION_ID }}
     - name: Run Bicep linter
       run: az bicep build --file ${{ env.TEMPLATE_SPEC_FILE_PATH }}
-
-  publish:
+    - name: Deploy to test environment
+      uses: azure/arm-deploy@v1
+      with:
+        deploymentName: ${{ github.run_number }}
+        scope: subscription
+        region: ${{ vars.AZURE_LOCATION }}
+        template: ${{ env.TESTENV_TEMPLATE_FILE_PATH }}
+        parameters: paramCustomDomain=${{ vars.CUSTOM_DOMAIN }} paramSubDomain=${{ vars.SUB_DOMAIN }} paramSiteName=${{ vars.SITE_NAME }} paramEnvironment=${{ vars.ENVIRONMENT_NAME }} paramLocation=${{ vars.AZURE_LOCATION }} paramRepositoryToken=${{ secrets.TESTENV_REPO_PAT }} paramRepositoryUrl=${{ vars.REPO_URL }} paramApiLocation=" " paramAppArtifactLocation=public paramAppLocation=/ paramRepositoryBranch=main paramSku=Free paramSkuCode=Free
+    - name: Get static site URL and set variable
+      run: |
+        url=$(az staticwebapp show --name ${{ vars.DEPLOYED_APP }}  --query "defaultHostname")
+        echo "TEST_URL=$url" >> $GITHUB_ENV
+    - name: Run tests
+      run: |
+        statuscode=$(curl -LI https://${{ env.TEST_URL }} -o /dev/null -w '%{http_code}\n' -s)
+        echo "STATUS CODE: $statuscode"
+    - name: Delete resources
+      run: az group delete --name ${{ vars.DEPLOYED_RG }} --yes
+  
+  PUBLISH:
     runs-on: ubuntu-latest
-    needs: [ lint ]
+    needs: [ TEST ]
     steps:
     - uses: actions/checkout@v3
     - uses: azure/login@v1
