@@ -21,6 +21,8 @@ jobs:
   TEST:
     runs-on: ubuntu-latest
     environment: test
+    outputs: 
+      statusoutput: ${{ steps.runtests.outputs.status }}
     steps:
     - uses: actions/checkout@v3
     - uses: azure/login@v1
@@ -44,13 +46,16 @@ jobs:
         url=$(az staticwebapp show --name ${{ vars.DEPLOYED_APP }}  --query "defaultHostname")
         echo "TEST_URL=$url" >> $GITHUB_ENV
     - name: Run tests
+      id: runtests
       run: |
         statuscode=$(curl -LI https://${{ env.TEST_URL }} -o /dev/null -w '%{http_code}\n' -s)
         echo "STATUS CODE: $statuscode"
+        echo "status=$statuscode" >> $GITHUB_OUTPUT
     - name: Delete resources
       run: az group delete --name ${{ vars.DEPLOYED_RG }} --yes
   
   PUBLISH:
+    if: needs.TEST.outputs.statusoutput == '200'
     runs-on: ubuntu-latest
     needs: [ TEST ]
     steps:

@@ -4,11 +4,6 @@
             "resourceGroup": "azure-resourcegroup-name",
             "subscription": "azure-subscription-id",
             "domain": "example.com"          
-        },
-        "liliengren.se":{
-            "resourceGroup": "liliengren-domain",
-            "subscription": "fc2d9bbc-d088-4d04-b94e-57fde785fe4c",
-            "domain": "liliengren.se"          
         }
     }
 }
