@@ -31,7 +31,7 @@ jobs:
         client-id: ${{ secrets.TESTENV_AZURE_CLIENT_ID }}
         tenant-id: ${{ secrets.TESTENV_AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.TESTENV_AZURE_SUBSCRIPTION_ID }}
-    - name: Run Bicep linter
+    - name: Run Bicep build
       run: az bicep build --file ${{ env.TEMPLATE_SPEC_FILE_PATH }}
     - name: Deploy to test environment
       uses: azure/arm-deploy@v1
